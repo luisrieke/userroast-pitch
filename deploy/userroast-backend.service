@@ -1,0 +1,13 @@
+[Unit]
+Description=userroast FastAPI backend
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/userroast/backend
+ExecStart=/root/.local/bin/uv run fastapi run app/main.py --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

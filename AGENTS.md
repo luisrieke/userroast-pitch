@@ -79,7 +79,7 @@ The actual **product application**.
 
 Both static sites share the **same visual language** (see `STYLEGUIDE.md` at the
 repo root): warm paper background, black ink, one acid-yellow highlight, a
-handwritten "roast" voice, Suisse Intl + Space Mono + Gloria Hallelujah.
+handwritten "roast" voice, Suisse Intl + Space Mono + Gloria Hallelujah.****
 
 Because the sites don't share files, this consistency is maintained by **keeping
 their `styles.css` copies in sync by hand** and following `STYLEGUIDE.md` — not

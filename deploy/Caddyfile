@@ -1,0 +1,14 @@
+userroast.com, www.userroast.com {
+    encode gzip
+    root * /opt/userroast/frontend/dist
+
+    @api path /api/* /health
+    handle @api {
+        reverse_proxy 127.0.0.1:8000
+    }
+
+    handle {
+        try_files {path} /index.html
+        file_server
+    }
+}
