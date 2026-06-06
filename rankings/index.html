@@ -31,7 +31,7 @@
     <div class="wrap">
       <div class="eyebrow">public repo rankings</div>
       <h1>user <span class="mark">roast</span></h1>
-      <p class="lede">We let <strong>userroast</strong> scan public GitHub repos and judge how real users would
+      <p class="lede">We let <a href="https://userroast.com" style="color: inherit; text-decoration: none;"><strong>userroast</strong></a> scan public GitHub repos and judge how real users would
         experience the product. Every repo gets a score — plus a very short roast.</p>
     </div>
   </header>
@@ -50,18 +50,18 @@
 
   <footer>
     <div class="wrap">
-      <div class="eyebrow">your product missing?</div>
+      <div class="eyebrow">your repo missing?</div>
       <h1 style="font-size:clamp(28px,5vw,46px);margin-top:12px;">get <span class="mark">roasted</span></h1>
       <p class="lede" style="margin-bottom:22px;">Run your repo through userroast and find out what bugs users and what
         they miss — before they leave.</p>
-      <button class="cta" id="copyBtn" type="button">
-        <span>hello@userroast.com</span>
+      <a class="cta" id="copyBtn" href="https://userroast.com">
+        <span>roast my repo</span>
         <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16150f" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
-          <rect x="9" y="9" width="13" height="13" rx="2" />
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          <path d="M5 12h14" />
+          <path d="M12 5l7 7-7 7" />
         </svg>
-      </button>
+      </a>
       <p class="foot-note" id="copyNote">scores are userroast simulations · what would users think?</p>
     </div>
   </footer>
@@ -249,14 +249,6 @@
 
     render([...repos].sort(sorters.score));
 
-    const copyBtn = document.getElementById('copyBtn');
-    const copyNote = document.getElementById('copyNote');
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard?.writeText('hello@userroast.com').then(() => {
-        copyNote.textContent = '✓ copied — now just mail us';
-        setTimeout(() => { copyNote.textContent = 'scores are userroast simulations · what would users think?'; }, 2200);
-      });
-    });
   </script>
 </body>
 
