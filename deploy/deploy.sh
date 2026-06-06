@@ -19,7 +19,7 @@ git pull
 
 log "Building frontend"
 cd "$APP_DIR/frontend"
-npm install
+pnpm install
 npm run build   # outputs frontend/dist
 
 log "Deploying Modal app"
