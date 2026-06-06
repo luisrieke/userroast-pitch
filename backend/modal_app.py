@@ -34,6 +34,41 @@ CATEGORIES = [
 ]
 CATEGORY_KEYS = {key for key, _ in CATEGORIES}
 
+# Audit scope ladder (key -> (label, grading guidance)), lenient -> strict.
+# The selected scope calibrates how harshly the agent scores each category.
+SCOPES = {
+    "hackathon": (
+        "Hackathon project",
+        "This was thrown together in a weekend to prove an idea. Judge the core "
+        "concept and whether the main feature works at all. Do NOT penalize "
+        "missing tests, observability, hardening, polish, or production ops - "
+        "score those categories generously and focus roasts on the core idea.",
+    ),
+    "mvp": (
+        "MVP / prototype",
+        "This is an early MVP. The core flow should work end to end with light "
+        "tolerance for rough edges. Expect basic error handling but go easy on "
+        "advanced reliability, integrations, and security hardening.",
+    ),
+    "beta": (
+        "Beta",
+        "This is a beta product with real users. Most features should be done; "
+        "UX, reliability, and integrations now matter. Hold a moderate bar and "
+        "expect reasonable error handling and security basics.",
+    ),
+    "production": (
+        "Production",
+        "This is a production product. Hold it to a high, best-in-class bar "
+        "across every category - feature depth, polished UX, solid integrations, "
+        "reliability/observability, and real security. Be strict and unforgiving.",
+    ),
+}
+DEFAULT_SCOPE = "hackathon"
+
+
+def _normalize_scope(scope: str | None) -> str:
+    return scope if scope in SCOPES else DEFAULT_SCOPE
+
 app = modal.App(APP_NAME)
 
 # Shared store between the local backend and this Modal function.
@@ -53,7 +88,18 @@ image = (
 )
 
 
-ANALYSIS_PROMPT = f"""\
+def build_analysis_prompt(scope: str) -> str:
+    scope = _normalize_scope(scope)
+    scope_label, scope_guidance = SCOPES[scope]
+    scope_section = (
+        f"AUDIT SCOPE: the author says this product is at the "
+        f"\"{scope_label}\" stage. Calibrate every score to expectations for "
+        f"that stage - {scope_guidance}\n\n"
+    )
+    return scope_section + _ANALYSIS_PROMPT_BODY
+
+
+_ANALYSIS_PROMPT_BODY = f"""\
 You are a senior product strategist and staff engineer running a Lighthouse-style \
 audit of the codebase in the current directory. You grade the product on 5 fixed \
 categories (0-100 each), roast each one, and list the concrete gaps with fixes.
@@ -109,12 +155,13 @@ def _now() -> str:
 class JobState:
     """Thread-safe in-memory job state mirrored into the shared modal.Dict."""
 
-    def __init__(self, job_id: str, repo_url: str):
+    def __init__(self, job_id: str, repo_url: str, scope: str = DEFAULT_SCOPE):
         self._lock = threading.Lock()
         self._finding_seq: dict[str, int] = {}
         self.data = {
             "job_id": job_id,
             "repo_url": repo_url,
+            "scope": _normalize_scope(scope),
             "status": "queued",
             "stages": [],
             "findings": [],
@@ -243,7 +290,7 @@ def _start_callback_server(state: JobState) -> ThreadingHTTPServer:
     return server
 
 
-def _stream_opencode(state: JobState, repo_dir: str) -> int:
+def _stream_opencode(state: JobState, repo_dir: str, prompt: str) -> int:
     """Run opencode headless and stream JSON events into the job stages."""
     env = dict(os.environ)
     env["CALLBACK_URL"] = f"http://127.0.0.1:{CALLBACK_PORT}"
@@ -257,7 +304,7 @@ def _stream_opencode(state: JobState, repo_dir: str) -> int:
             "--format",
             "json",
             "--dangerously-skip-permissions",
-            ANALYSIS_PROMPT,
+            prompt,
         ],
         cwd=repo_dir,
         env=env,
@@ -304,8 +351,9 @@ def _ingest_event(state: JobState, event: dict) -> None:
 
 
 @app.function(image=image, timeout=20 * 60, secrets=[anthropic_secret])
-def analyze_repo(job_id: str, repo_url: str) -> None:
-    state = JobState(job_id, repo_url)
+def analyze_repo(job_id: str, repo_url: str, scope: str = DEFAULT_SCOPE) -> None:
+    scope = _normalize_scope(scope)
+    state = JobState(job_id, repo_url, scope)
     repo_dir = "/workspace/repo"
     server = None
     try:
@@ -322,7 +370,7 @@ def analyze_repo(job_id: str, repo_url: str) -> None:
         state.set_status("analyzing")
         state.add_stage("analyze", "Running OpenCode product-gap analysis")
 
-        code = _stream_opencode(state, repo_dir)
+        code = _stream_opencode(state, repo_dir, build_analysis_prompt(scope))
         if code != 0:
             state.add_stage("analyze", f"OpenCode exited with code {code}")
 

@@ -44,6 +44,20 @@ _CATEGORIES = [
     ("security", "Security"),
 ]
 
+# Audit scope ladder (key -> display label), lenient -> strict. Mirror of the
+# SCOPES in modal_app.py so grading expectations match the selected stage.
+_SCOPES = {
+    "hackathon": "Hackathon project",
+    "mvp": "MVP / prototype",
+    "beta": "Beta",
+    "production": "Production",
+}
+_DEFAULT_SCOPE = "hackathon"
+
+
+def _normalize_scope(scope: str | None) -> str:
+    return scope if scope in _SCOPES else _DEFAULT_SCOPE
+
 
 def _slugify_repo(repo_url: str) -> str:
     s = re.sub(r"^https?://", "", repo_url.strip())
@@ -59,6 +73,7 @@ def _nanoid(n: int = 6) -> str:
 
 class ScanRequest(BaseModel):
     repo_url: str
+    scope: str = _DEFAULT_SCOPE
 
 
 @app.get("/health")
@@ -77,11 +92,13 @@ def create_scan(req: ScanRequest) -> dict[str, str]:
     if not repo_url:
         raise HTTPException(status_code=400, detail="repo_url is required")
 
+    scope = _normalize_scope(req.scope)
     job_id = f"{_slugify_repo(repo_url)}-{_nanoid()}"
     now = datetime.now(timezone.utc).isoformat()
     jobs[job_id] = {
         "job_id": job_id,
         "repo_url": repo_url,
+        "scope": scope,
         "status": "queued",
         "stages": [],
         "findings": [],
@@ -99,7 +116,7 @@ def create_scan(req: ScanRequest) -> dict[str, str]:
     }
 
     analyze_repo = modal.Function.from_name(APP_NAME, "analyze_repo")
-    analyze_repo.spawn(job_id, repo_url)
+    analyze_repo.spawn(job_id, repo_url, scope)
 
     return {"job_id": job_id}
 

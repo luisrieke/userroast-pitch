@@ -2,6 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export const API_BASE = import.meta.env.VITE_API_BASE ?? ''
 
@@ -34,6 +42,7 @@ type Scores = {
 type Scan = {
   job_id: string
   repo_url: string
+  scope?: string
   status: string
   stages: Stage[]
   findings: Finding[]
@@ -45,6 +54,18 @@ type Scan = {
 }
 
 const TERMINAL_STATES = ['done', 'error']
+
+// Audit scope ladder (lenient -> strict). Mirror of SCOPES in backend.
+// First entry is the default selection.
+const SCOPE_OPTIONS = [
+  { value: 'hackathon', label: 'hackathon' },
+  { value: 'mvp', label: 'mvp' },
+  { value: 'beta', label: 'beta' },
+  { value: 'production', label: 'prod' },
+] as const
+
+const scopeLabel = (value: string | undefined) =>
+  SCOPE_OPTIONS.find((s) => s.value === value)?.label ?? null
 
 // Accept full URLs (github.com/owner/repo) or bare slugs (owner/repo).
 const normalizeRepoUrl = (input: string) => {
@@ -207,6 +228,7 @@ function ProgressLog({ scan, running }: { scan: Scan; running: boolean }) {
 
 function App() {
   const [repoUrl, setRepoUrl] = useState('')
+  const [scope, setScope] = useState<string>(SCOPE_OPTIONS[0].value)
   const [jobId, setJobId] = useState<string | null>(() => readJobFromUrl())
   const [scan, setScan] = useState<Scan | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -263,7 +285,7 @@ function App() {
       const res = await fetch(`${API_BASE}/api/scans`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ repo_url: normalizeRepoUrl(repoUrl) }),
+        body: JSON.stringify({ repo_url: normalizeRepoUrl(repoUrl), scope }),
       })
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
@@ -358,7 +380,16 @@ function App() {
             >
               {scan.repo_url.replace(/^https?:\/\/(www\.)?github\.com\//, '')}
             </a>
-            <span className="ml-auto shrink-0 font-mono text-xs uppercase tracking-wide text-muted-foreground">
+            {scopeLabel(scan.scope) && (
+              <span className="ml-auto shrink-0 font-mono text-xs uppercase tracking-wide text-muted-foreground">
+                judged as <span className="text-ink">{scopeLabel(scan.scope)}</span>
+              </span>
+            )}
+            <span
+              className={`${
+                scopeLabel(scan.scope) ? '' : 'ml-auto '
+              }shrink-0 font-mono text-xs uppercase tracking-wide text-muted-foreground`}
+            >
               {running ? 'roasting…' : 'roasted 🍖'}
             </span>
           </div>
@@ -371,15 +402,55 @@ function App() {
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
               disabled={submitting}
-              className="font-mono"
+              className="flex-1 font-mono"
             />
-            <Button
-              type="submit"
-              className="font-mono uppercase tracking-wide"
-              disabled={submitting}
-            >
-              {submitting ? 'starting…' : 'roast it 🍖'}
-            </Button>
+            <div className="flex shrink-0">
+              <Button
+                type="submit"
+                className="shrink-0 rounded-r-none font-mono uppercase tracking-wide"
+                disabled={submitting}
+              >
+                {submitting ? 'starting…' : 'roast it 🍖'}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="-ml-px rounded-l-none border-line bg-card text-ink"
+                      disabled={submitting}
+                      aria-label={`audit scope: ${scopeLabel(scope) ?? scope}`}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="size-4"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
+                        <path d="M19.43 12.98c.04-.32.07-.65.07-.98s-.02-.66-.07-.98l2.11-1.65a.5.5 0 0 0 .12-.64l-2-3.46a.5.5 0 0 0-.6-.22l-2.49 1a7.1 7.1 0 0 0-1.69-.98L14.5 2.42A.5.5 0 0 0 14 2h-4a.5.5 0 0 0-.5.42L9.12 5.07a7.1 7.1 0 0 0-1.69.98l-2.49-1a.5.5 0 0 0-.6.22l-2 3.46a.5.5 0 0 0 .12.64l2.11 1.65c-.04.32-.07.65-.07.98s.02.66.07.98l-2.11 1.65a.5.5 0 0 0-.12.64l2 3.46a.5.5 0 0 0 .6.22l2.49-1c.51.4 1.08.73 1.69.98l.38 2.65a.5.5 0 0 0 .5.42h4a.5.5 0 0 0 .5-.42l.38-2.65c.61-.25 1.18-.58 1.69-.98l2.49 1a.5.5 0 0 0 .6-.22l2-3.46a.5.5 0 0 0-.12-.64l-2.11-1.65Z" />
+                      </svg>
+                    </Button>
+                  }
+                />
+                <DropdownMenuContent>
+                  <DropdownMenuLabel>judge as</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup value={scope} onValueChange={(value) => setScope(value)}>
+                    {SCOPE_OPTIONS.map((opt) => (
+                      <DropdownMenuRadioItem key={opt.value} value={opt.value} closeOnClick>
+                        {opt.label}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </form>
         )}
       </div>
