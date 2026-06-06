@@ -294,6 +294,22 @@ function App() {
         loop
         playsInline
       />
+      <a
+        className="qr-badge fixed right-4 top-[42px] z-50 flex flex-col items-center gap-1.5 rounded-[10px] border border-[var(--line-strong)] bg-card p-2.5 no-underline transition-[transform,box-shadow] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(22,21,15,0.12)]"
+        href="https://userroast.com"
+        aria-label="Scan to open userroast.com"
+      >
+        <img
+          src="/images/qr-userroast.png"
+          alt="QR code linking to userroast.com"
+          width={96}
+          height={96}
+          className="block rounded"
+        />
+        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+          scan me
+        </span>
+      </a>
       <main
         className={`mx-auto flex min-h-screen flex-col px-6 ${
           scan ? 'max-w-6xl py-16' : 'max-w-4xl justify-center'
