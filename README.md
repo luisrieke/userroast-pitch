@@ -1,4 +1,4 @@
-# userroast
+# 🍖 userroast
 
 Built at the [**founder hackathon: build fast & get funded**](https://luma.com/hmqh70k1?tk=HAIqlb) — a full-day founder hackathon by AI BEAVERS & Mollie at House of AI Hamburg, Sat Jun 6 2026.
 
