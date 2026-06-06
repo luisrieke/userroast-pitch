@@ -28,6 +28,7 @@ type Finding = {
   severity: string
   description: string
   fix?: string
+  points?: number | null
 }
 type CategoryScore = {
   key: string
@@ -559,12 +560,19 @@ function App() {
                             <span className="font-heading text-sm font-medium">
                               {f.title}
                             </span>
-                            <Badge
-                              variant={severityVariant(f.severity)}
-                              className="ml-auto font-mono uppercase tracking-wide"
-                            >
-                              {f.severity}
-                            </Badge>
+                            <div className="ml-auto flex shrink-0 items-center gap-2">
+                              {f.points != null && f.points > 0 && (
+                                <span className="rounded-full border border-line bg-secondary/60 px-2.5 py-1 font-mono text-xs font-bold tracking-wide text-ink">
+                                  fix +{f.points}
+                                </span>
+                              )}
+                              <Badge
+                                variant={severityVariant(f.severity)}
+                                className="font-mono uppercase tracking-wide"
+                              >
+                                {f.severity}
+                              </Badge>
+                            </div>
                           </summary>
                           <div className="flex flex-col gap-3 px-4 pb-4 pl-11 text-[15px] text-[#3a3830]">
                             <p>{f.description}</p>

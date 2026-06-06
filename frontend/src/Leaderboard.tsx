@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { API_BASE, navigate, scoreColor, ScoreBar } from './App'
+import { API_BASE, navigate } from './App'
 
 // Hardcode the hackathon entries here as owner/repo slugs (lowercase).
 // e.g. "vercel/next.js". The "hackathon only" toggle filters to this set.
@@ -13,7 +13,8 @@ type LeaderboardScan = {
   status: string
   overall: number | null
   summary: string | null
-  updated_at: string
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 // Strip protocol / github.com / .git down to a lowercase owner/repo slug.
@@ -26,11 +27,53 @@ const normalizeSlug = (repoUrl: string) =>
     .replace(/\/+$/, '')
     .toLowerCase()
 
+const scanTimestamp = (scan: LeaderboardScan) =>
+  Date.parse(scan.created_at ?? scan.updated_at ?? '') || 0
+
+const leaderboardScoreColor = (score: number | null) => {
+  if (score == null) return 'var(--line)'
+  if (score < 50) return 'var(--meat)'
+  if (score > 65) return '#16803a'
+  return 'var(--yellow)'
+}
+
+const latestScanPerRepo = (scans: LeaderboardScan[]) => {
+  const latestBySlug = new Map<string, LeaderboardScan>()
+
+  for (const scan of scans) {
+    const slug = normalizeSlug(scan.repo_url)
+    const existing = latestBySlug.get(slug)
+    if (!existing || scanTimestamp(scan) > scanTimestamp(existing)) {
+      latestBySlug.set(slug, scan)
+    }
+  }
+
+  return Array.from(latestBySlug.values()).sort((a, b) => {
+    const scoreDiff = (b.overall ?? -Infinity) - (a.overall ?? -Infinity)
+    if (scoreDiff !== 0) return scoreDiff
+    return scanTimestamp(b) - scanTimestamp(a)
+  })
+}
+
 function RankBadge({ rank }: { rank: number }) {
   return (
     <span className="w-8 shrink-0 text-center font-mono text-sm font-bold text-muted-foreground">
       {rank}
     </span>
+  )
+}
+
+function LeaderboardScoreBar({ score }: { score: number | null }) {
+  return (
+    <div className="h-1 w-full overflow-hidden rounded-full bg-line">
+      <div
+        className="h-full rounded-full transition-[width] duration-700 ease-out"
+        style={{
+          width: `${score ?? 0}%`,
+          background: leaderboardScoreColor(score),
+        }}
+      />
+    </div>
   )
 }
 
@@ -62,8 +105,9 @@ export default function Leaderboard() {
   )
 
   const visible = useMemo(() => {
-    if (!hackathonOnly) return scans
-    return scans.filter((s) => hackathonSet.has(normalizeSlug(s.repo_url)))
+    const latestScans = latestScanPerRepo(scans)
+    if (!hackathonOnly) return latestScans
+    return latestScans.filter((s) => hackathonSet.has(normalizeSlug(s.repo_url)))
   }, [scans, hackathonOnly, hackathonSet])
 
   return (
@@ -157,12 +201,12 @@ export default function Leaderboard() {
                         </p>
                       )}
                       <div className="mt-2 max-w-[220px]">
-                        <ScoreBar score={s.overall} />
+                        <LeaderboardScoreBar score={s.overall} />
                       </div>
                     </div>
                     <div
                       className="shrink-0 font-mono text-2xl font-bold"
-                      style={{ color: scoreColor(s.overall) }}
+                      style={{ color: leaderboardScoreColor(s.overall) }}
                     >
                       {s.overall ?? '–'}
                       <span className="text-sm text-muted-foreground">/100</span>

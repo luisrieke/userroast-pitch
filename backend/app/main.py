@@ -133,6 +133,7 @@ def list_scans() -> list[dict]:
                     "status": v.get("status"),
                     "overall": (v.get("scores") or {}).get("overall"),
                     "summary": v.get("summary"),
+                    "created_at": v.get("created_at"),
                     "updated_at": v.get("updated_at"),
                 }
             )

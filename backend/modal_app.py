@@ -133,10 +133,12 @@ soon as you've judged it:
 -d '{{"category": "<feature|ux|integration|reliability|security>", "score": <0-100 integer>, "roast": "<one punchy handwritten-voice sentence>"}}'
 
 - For EACH gap you find, immediately post a finding (one curl per finding). The \
-`category` MUST be one of the 5 keys, and `fix` MUST be a concrete, actionable fix \
-(what file/area to change and how):
+`category` MUST be one of the 5 keys, `fix` MUST be a concrete, actionable fix \
+(what file/area to change and how), and `points` MUST be your estimate of how many \
+points the product's OVERALL score (0-100) would gain if this single gap were fixed \
+(an integer, typically 1-15, larger for more impactful gaps):
   curl -s -X POST "$CALLBACK_URL/finding" -H 'Content-Type: application/json' \
--d '{{"title": "<short title>", "category": "<feature|ux|integration|reliability|security>", "severity": "<low|medium|high>", "description": "<1-3 sentences, what is wrong>", "fix": "<1-3 sentences, concrete actionable fix>"}}'
+-d '{{"title": "<short title>", "category": "<feature|ux|integration|reliability|security>", "severity": "<low|medium|high>", "description": "<1-3 sentences, what is wrong>", "fix": "<1-3 sentences, concrete actionable fix>", "points": <integer points gained by fixing>}}'
 
 - When completely done, post a summary:
   curl -s -X POST "$CALLBACK_URL/summary" -H 'Content-Type: application/json' \
@@ -202,6 +204,10 @@ class JobState:
                 category = "other"
             seq = self._finding_seq.get(category, 0) + 1
             self._finding_seq[category] = seq
+            try:
+                points = max(0, min(100, int(round(float(finding.get("points"))))))
+            except (TypeError, ValueError):
+                points = None
             self.data["findings"].append(
                 {
                     "id": f"{category}-{seq}",
@@ -210,6 +216,7 @@ class JobState:
                     "severity": finding.get("severity", "medium"),
                     "description": finding.get("description", ""),
                     "fix": finding.get("fix", ""),
+                    "points": points,
                 }
             )
             self._flush()
