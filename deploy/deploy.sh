@@ -22,10 +22,10 @@ cd "$APP_DIR/frontend"
 pnpm install
 npm run build   # outputs frontend/dist
 
-log "Deploying Modal app"
-cd "$APP_DIR/backend"
-set -a && . "$APP_DIR/.env" && set +a
-uv run modal deploy modal_app.py
+# log "Deploying Modal app"
+# cd "$APP_DIR/backend"
+# set -a && . "$APP_DIR/.env" && set +a
+# uv run modal deploy modal_app.py
 
 log "Restarting backend service"
 systemctl restart userroast-backend
