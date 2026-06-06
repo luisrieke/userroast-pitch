@@ -6,7 +6,7 @@
 #
 #   sudo /opt/userroast/deploy/deploy.sh
 #
-set -euo pipefail
+# set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/userroast}"
 
