@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>user roast · public repo rankings</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%8D%96</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Gloria+Hallelujah&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="rankings.css" />
+</head>
+
+<body>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="run mono">
+      <span>now in beta</span><span>·</span><span>what bugs users?</span><span>·</span><span>what users
+        miss</span><span>·</span><span>roast my repo</span><span>·</span><span>scan it on
+        userroast.com</span><span>·</span>
+      <span>now in beta</span><span>·</span><span>what bugs users?</span><span>·</span><span>what users
+        miss</span><span>·</span><span>roast my repo</span><span>·</span><span>scan it on
+        userroast.com</span><span>·</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="wrap">
+      <div class="eyebrow">public repo rankings</div>
+      <h1>user <span class="mark">roast</span></h1>
+      <p class="lede">We let <strong>userroast</strong> scan public GitHub repos and judge how real users would
+        experience the product. Every repo gets a score — plus a very short roast.</p>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="controls">
+      <span class="label">sort</span>
+      <button type="button" class="chip active" data-sort="score">score ↓</button>
+      <button type="button" class="chip" data-sort="name">a–z</button>
+      <button type="button" class="chip" data-sort="roast">harshest roast</button>
+      <span class="count" id="count"></span>
+    </div>
+
+    <main class="grid" id="grid"></main>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <div class="eyebrow">your product missing?</div>
+      <h1 style="font-size:clamp(28px,5vw,46px);margin-top:12px;">get <span class="mark">roasted</span></h1>
+      <p class="lede" style="margin-bottom:22px;">Run your repo through userroast and find out what bugs users and what
+        they miss — before they leave.</p>
+      <button class="cta" id="copyBtn" type="button">
+        <span>hello@userroast.com</span>
+        <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16150f" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      </button>
+      <p class="foot-note" id="copyNote">scores are userroast simulations · what would users think?</p>
+    </div>
+  </footer>
+
+  <script>
+    const repos = [
+      {
+        name: "Excalidraw",
+        repo: "excalidraw/excalidraw",
+        url: "https://github.com/excalidraw/excalidraw",
+        summary: "Whiteboard for hand-drawn-style diagrams — right in the browser, no account.",
+        score: 94,
+        roast: "You land, you draw, you're happy. Almost suspiciously frictionless — where's the catch?",
+        bugs: "Export options are buried behind too many clicks.",
+        miss: "A clear note that everything stays local & private."
+      },
+      {
+        name: "shadcn/ui",
+        repo: "shadcn-ui/ui",
+        url: "https://github.com/shadcn-ui/ui",
+        summary: "Copy-paste components for React — not an npm package, just your code.",
+        score: 91,
+        roast: "Brilliant idea, but \"it's not a library\" takes three reads before it clicks.",
+        bugs: "Tailwind + config setup scares off first-timers.",
+        miss: "A 30-second \"why no npm install?\" explainer."
+      },
+      {
+        name: "Supabase",
+        repo: "supabase/supabase",
+        url: "https://github.com/supabase/supabase",
+        summary: "Open-source Firebase alternative: Postgres, Auth, Storage, Realtime.",
+        score: 88,
+        roast: "Promises \"2 minutes\", then needs 20 browser tabs of docs to get productive.",
+        bugs: "The huge feature set overwhelms newcomers instantly.",
+        miss: "A \"just do this\" path for the first build."
+      },
+      {
+        name: "Astro",
+        repo: "withastro/astro",
+        url: "https://github.com/withastro/astro",
+        summary: "Content-focused web framework that ships almost no JS by default.",
+        score: 86,
+        roast: "Docs look gorgeous, but \"Islands\" reads to a beginner like a treasure map with no X.",
+        bugs: "Terms like \"Islands\" stay abstract.",
+        miss: "A concrete \"should I pick Astro?\" decision guide."
+      },
+      {
+        name: "Tailwind CSS",
+        repo: "tailwindlabs/tailwindcss",
+        url: "https://github.com/tailwindlabs/tailwindcss",
+        summary: "Utility-first CSS framework you style directly in the markup.",
+        score: 85,
+        roast: "Landing nails it, but one look at 12 classes per div gives skeptics a light sweat.",
+        bugs: "The first code example feels overloaded.",
+        miss: "Kill the \"won't this get unreadable?\" fear up front."
+      },
+      {
+        name: "Bun",
+        repo: "oven-sh/bun",
+        url: "https://github.com/oven-sh/bun",
+        summary: "Fast JS runtime, bundler, test runner & package manager in one.",
+        score: 82,
+        roast: "Sells speed like a sports car, forgets to say whether my old projects are even allowed in.",
+        bugs: "Unclear what's already Node-compatible.",
+        miss: "An honest \"production-ready?\" status up top."
+      },
+      {
+        name: "Drizzle ORM",
+        repo: "drizzle-team/drizzle-orm",
+        url: "https://github.com/drizzle-team/drizzle-orm",
+        summary: "TypeScript ORM that feels like SQL — type-safe and lightweight.",
+        score: 80,
+        roast: "Likeable, but you have to click together the \"Drizzle vs. the other ORM\" comparison yourself.",
+        bugs: "The migrations workflow isn't obvious at first.",
+        miss: "A side-by-side comparison with Prisma & co."
+      },
+      {
+        name: "React Email",
+        repo: "resend/react-email",
+        url: "https://github.com/resend/react-email",
+        summary: "Build emails with React components — no table hell.",
+        score: 78,
+        roast: "Nice demo, but \"and how do I actually send this?\" stays a cliffhanger.",
+        bugs: "The sending part reads like a Resend ad.",
+        miss: "A provider-neutral sending example."
+      },
+      {
+        name: "Vite",
+        repo: "vitejs/vite",
+        url: "https://github.com/vitejs/vite",
+        summary: "Blazing-fast frontend build tool with hot module replacement.",
+        score: 76,
+        roast: "Everyone loves it, but the homepage assumes you already know why you need it.",
+        bugs: "Little \"why not webpack?\" context for newcomers.",
+        miss: "A plain-language intro for non-tooling nerds."
+      },
+      {
+        name: "Svelte",
+        repo: "sveltejs/svelte",
+        url: "https://github.com/sveltejs/svelte",
+        summary: "UI framework with no virtual DOM — a compiler instead of a runtime.",
+        score: 74,
+        roast: "Tutorial is gold, but the repo README sends you on a little link hunt across the web first.",
+        bugs: "The README itself says little about the \"why\".",
+        miss: "A code snippet within the first scroll."
+      },
+      {
+        name: "Next.js",
+        repo: "vercel/next.js",
+        url: "https://github.com/vercel/next.js",
+        summary: "React framework for production: routing, rendering, fullstack.",
+        score: 71,
+        roast: "Powerful, but App vs. Pages router feels like two products sharing one name.",
+        bugs: "App vs. Pages router confuses beginners massively.",
+        miss: "A clear call on which one to start with today."
+      },
+      {
+        name: "Storybook",
+        repo: "storybookjs/storybook",
+        url: "https://github.com/storybookjs/storybook",
+        summary: "Workshop for building & testing UI components in isolation.",
+        score: 68,
+        roast: "Great for big teams — but after setup, solo devs rightly ask: \"was that worth it?\"",
+        bugs: "Heavy initial install & lots of config.",
+        miss: "An honest \"is this worth it for me?\" section."
+      }
+    ];
+
+    const grid = document.getElementById('grid');
+    const countEl = document.getElementById('count');
+
+    function rankLabel(i) { return String(i + 1).padStart(2, '0'); }
+
+    function render(list) {
+      grid.innerHTML = '';
+      list.forEach((r, i) => {
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.innerHTML = `
+        <div class="top">
+          <div class="rank">${rankLabel(i)}</div>
+          <div style="flex:1; min-width:0;">
+            <h3 class="name"><a href="${r.url}" target="_blank" rel="noopener">${r.name}</a></h3>
+            <a class="repo" href="${r.url}" target="_blank" rel="noopener">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="#8a877a"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.32c-2.23.49-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.71 1.22 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.83-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.52.56.83 1.28.83 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+              ${r.repo}
+            </a>
+          </div>
+          <div class="score-wrap">
+            <div class="score">${r.score}<small>/100</small></div>
+            <div class="bar"><i style="width:${r.score}%"></i></div>
+          </div>
+        </div>
+        <p class="summary">${r.summary}</p>
+        <p class="roast hand"><b>🍖 roast</b>${r.roast}</p>
+        <div class="feedback">
+          <div class="fb">
+            <h4>what bugs users</h4>
+            <p>${r.bugs}</p>
+          </div>
+          <div class="fb">
+            <h4>what users miss</h4>
+            <p>${r.miss}</p>
+          </div>
+        </div>
+      `;
+        grid.appendChild(card);
+      });
+      countEl.textContent = list.length + ' repos scanned';
+    }
+
+    const sorters = {
+      score: (a, b) => b.score - a.score,
+      name: (a, b) => a.name.localeCompare(b.name),
+      roast: (a, b) => a.score - b.score
+    };
+
+    document.querySelectorAll('.chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.chip').forEach(c => { c.classList.remove('active'); });
+        chip.classList.add('active');
+        render([...repos].sort(sorters[chip.dataset.sort]));
+      });
+    });
+
+    render([...repos].sort(sorters.score));
+
+    const copyBtn = document.getElementById('copyBtn');
+    const copyNote = document.getElementById('copyNote');
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard?.writeText('hello@userroast.com').then(() => {
+        copyNote.textContent = '✓ copied — now just mail us';
+        setTimeout(() => { copyNote.textContent = 'scores are userroast simulations · what would users think?'; }, 2200);
+      });
+    });
+  </script>
+</body>
+
+</html>
