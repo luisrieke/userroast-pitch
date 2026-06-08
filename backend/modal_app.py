@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import threading
 import time
@@ -366,6 +367,11 @@ def analyze_repo(job_id: str, repo_url: str, scope: str = DEFAULT_SCOPE) -> None
     try:
         state.set_status("cloning")
         state.add_stage("clone", f"Cloning {repo_url}")
+        # Modal reuses warm containers, so /workspace/repo can survive from a
+        # previous job. git clone fails into a non-empty dir, and reusing a
+        # leftover checkout would score stale code from another repo. Always
+        # start from a clean directory.
+        shutil.rmtree(repo_dir, ignore_errors=True)
         subprocess.run(
             ["git", "clone", "--depth", "1", repo_url, repo_dir],
             check=True,
@@ -393,3 +399,5 @@ def analyze_repo(job_id: str, repo_url: str, scope: str = DEFAULT_SCOPE) -> None
             # give any in-flight callbacks a moment to land
             time.sleep(1)
             server.shutdown()
+        # Don't leave the checkout behind for the next warm container to reuse.
+        shutil.rmtree(repo_dir, ignore_errors=True)
