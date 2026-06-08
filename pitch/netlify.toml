@@ -1,0 +1,35 @@
+# Netlify configuration for the standalone pitch deck
+# (pitch.userroast.com). This Netlify site's "base directory" is this folder,
+# so every path below is relative to pitch/.
+#
+# Why this file exists: pitch/ and rankings/ are two separate Netlify sites
+# pointed at the SAME repo. Without an in-repo config, every push and every PR
+# triggered a deploy for each site against the whole repo, so deploy previews
+# stalled "in progress", cancelled one another, and never reported back —
+# blocking PRs. The original setup effectively only worked for the production
+# (main) branch.
+
+[build]
+  # Pure static site — there is no build step. Publish the folder as-is.
+  publish = "."
+  command = "echo 'pitch is a static site; nothing to build.'"
+
+  # Monorepo guard: only deploy when files in THIS site actually changed.
+  # Netlify treats a zero exit code from `ignore` as "skip this build" (the
+  # deploy is reported as skipped/success instead of hanging). `git diff
+  # --quiet` exits 0 when there is no diff (skip) and non-zero when there is
+  # (build). CACHED_COMMIT_REF/COMMIT_REF are provided by Netlify; if either is
+  # missing (e.g. first build) the command errors non-zero and we build, which
+  # is the safe default.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF ."
+
+# Deploy previews (PRs) and branch deploys build exactly like production, so
+# CI/CD stops hanging or skipping on non-main branches.
+[context.production]
+  command = "echo 'pitch is a static site; nothing to build.'"
+
+[context.deploy-preview]
+  command = "echo 'pitch is a static site; nothing to build.'"
+
+[context.branch-deploy]
+  command = "echo 'pitch is a static site; nothing to build.'"
