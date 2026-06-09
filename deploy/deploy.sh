@@ -6,7 +6,7 @@
 #
 #   sudo /opt/userroast/deploy/deploy.sh
 #
-# set -euo pipefail
+set -euo pipefail
 
 APP_DIR="${APP_DIR:-/opt/userroast}"
 
@@ -22,10 +22,19 @@ cd "$APP_DIR/frontend"
 pnpm install
 npm run build   # outputs frontend/dist
 
-# log "Deploying Modal app"
-# cd "$APP_DIR/backend"
-# set -a && . "$APP_DIR/.env" && set +a
-# uv run modal deploy modal_app.py
+# Deploy the Modal app that actually runs the repo analyzer. Without this step
+# changes to backend/modal_app.py never reach production — the backend keeps
+# spawning the previously-deployed version of the function. Set DEPLOY_MODAL=0
+# to skip (e.g. on a host without Modal credentials).
+if [ "${DEPLOY_MODAL:-1}" = "1" ]; then
+  log "Deploying Modal app"
+  cd "$APP_DIR/backend"
+  set -a && . "$APP_DIR/.env" && set +a
+  uv run modal deploy modal_app.py
+  cd "$APP_DIR"
+else
+  log "Skipping Modal deploy (DEPLOY_MODAL=0)"
+fi
 
 log "Restarting backend service"
 systemctl restart userroast-backend
