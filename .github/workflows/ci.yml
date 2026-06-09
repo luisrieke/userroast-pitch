@@ -1,0 +1,58 @@
+name: CI
+
+# Real PR checks for the product app (frontend + backend). The two static
+# sites (pitch/, rankings/) are built and deploy-previewed by Netlify; this
+# workflow covers everything Netlify does NOT: the React SPA and the Python
+# backend / Modal analyzer.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer commit on the same ref supersedes in-flight runs instead of letting
+# them pile up (the same class of "hung/duplicate check" problem we hit on the
+# Netlify side).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend · build + lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      # Type-check + production build. This is exactly what the VM runs in
+      # deploy/deploy.sh (`npm run build`), so a green build here means the
+      # prod build won't break on deploy.
+      - run: pnpm run build
+      # Lint is advisory for now so pre-existing style nits don't block PRs.
+      # Flip to a hard gate once the tree is clean.
+      - run: pnpm run lint
+        continue-on-error: true
+
+  backend:
+    name: Backend · syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # Syntax-check the whole backend without importing it. Importing
+      # modal_app.py would require Modal credentials/network, but compileall
+      # still catches the syntax errors that would otherwise only blow up at
+      # `modal deploy` time on the VM.
+      - run: python -m compileall -q backend
